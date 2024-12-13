@@ -1,0 +1,170 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <title>Coverage Report > DeleteClotheCommandHandler2</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">application.delete</a>
+</div>
+
+<h1>Coverage Summary for Class: DeleteClotheCommandHandler2 (application.delete)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DeleteClotheCommandHandler2</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    95%
+  </span>
+  <span class="absValue">
+    (19/20)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package application.delete;
+&nbsp;
+&nbsp;import application.results.Result;
+&nbsp;import domain.entities.ClotheEntity;
+&nbsp;import domain.repositories.IRepository;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.web.client.RestTemplate;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;
+&nbsp;import javax.validation.ConstraintViolation;
+&nbsp;import javax.validation.Validator;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.Set;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;@Service
+&nbsp;public class DeleteClotheCommandHandler2 {
+&nbsp;
+&nbsp;    public static final String API_URL = &quot;http://127.0.0.1/api/allowDelete&quot;;
+&nbsp;
+&nbsp;    private final IRepository repository;
+&nbsp;    private final RestTemplate restTemplate;
+&nbsp;    private final Validator validator;
+&nbsp;
+&nbsp;    @Autowired
+<b class="fc">&nbsp;    public DeleteClotheCommandHandler2(IRepository repository, RestTemplate restTemplate, Validator validator) {</b>
+<b class="fc">&nbsp;        this.repository = repository;</b>
+<b class="fc">&nbsp;        this.restTemplate = restTemplate;</b>
+<b class="fc">&nbsp;        this.validator = validator;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Result handle(DeleteClotheCommand request) {
+&nbsp;        // Validate the command
+<b class="fc">&nbsp;        Set&lt;ConstraintViolation&lt;DeleteClotheCommand&gt;&gt; violations = validator.validate(request);</b>
+<b class="fc">&nbsp;        if (!violations.isEmpty()) {</b>
+<b class="fc">&nbsp;            return new Result(false, &quot;Invalid data&quot;, null);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Fetch the entity from the repository
+<b class="fc">&nbsp;        Optional&lt;ClotheEntity&gt; clothe = repository.findById(request.getId());</b>
+<b class="fc">&nbsp;        if (clothe.isEmpty()) {</b>
+<b class="fc">&nbsp;            return new Result(false, &quot;Clothe not found&quot;, null);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Make the HTTP request to check if deletion is allowed
+<b class="fc">&nbsp;        ResponseEntity&lt;Result&gt; response = restTemplate.getForEntity(API_URL, Result.class);</b>
+&nbsp;
+<b class="fc">&nbsp;        if (!response.getStatusCode().is2xxSuccessful()) {</b>
+<b class="fc">&nbsp;            return new Result(false, &quot;Failed to call external API&quot;, null);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Process the API response
+<b class="fc">&nbsp;        Result apiData = response.getBody();</b>
+<b class="fc">&nbsp;        if (apiData == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalStateException(&quot;Invalid API data received.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (apiData.isSuccess()) {</b>
+&nbsp;            // Perform the deletion
+<b class="fc">&nbsp;            repository.delete(clothe.get());</b>
+<b class="fc">&nbsp;            return new Result(true, &quot;Clothe deleted successfully&quot;, clothe.get().getId());</b>
+&nbsp;        } else {
+<b class="nc">&nbsp;            return apiData;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2024-12-12 22:12</div>
+</div>
+</body>
+</html>

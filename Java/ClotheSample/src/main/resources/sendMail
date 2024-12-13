@@ -1,0 +1,10 @@
+1. Send mail to resolver
+- check if has resolver && has dueDate  && issue chua CLOSE                --> send mail to resolver & create job schedule
+- check if resolver's email updated || dueDate updated                     --> send mail to new resolver & create new job schedule
+                                                                                delete old job schedule
+- check if issue close                                                      --> delete old job schedule
+- check if resolver REJECT                                                  --> send mail to resolver && create job schedule
+
+
+2. Send mail to processOwner && IssueOwner
+- check if resolver update processStatus: DONE && completedTime  && APPROVAL_STATUS is not [APPROVED, REJECT] --> send email to confirmation

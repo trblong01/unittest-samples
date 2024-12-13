@@ -1,0 +1,201 @@
+server:
+  port: ${PORT:8668}
+  servlet:
+    context-path: ${SERVICE_PATH:/api/gemba/v${API_VERSION:0}}
+  error:
+    include-message: always
+spring:
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: true
+      WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS: false
+  profiles:
+    active: ${ENV:local}
+  datasource:
+    url: ${POSTGRESQL_URL:jdbc:postgresql://172.17.0.1:5432/htc_spa?currentSchema=gemba}
+    username: ${POSTGRESQL_USER:postgres}
+    password: ${POSTGRESQL_PWD:postgres}
+    initialization-mode: ${INIT_DATABASE:NEVER}
+    data: classpath:data.sql
+    schema: classpath:schema.sql
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+
+  ## MULTIPART (MultipartProperties)
+  # Enable multipart uploads
+  servlet:
+    multipart:
+      enabled: true
+
+      # Threshold after which files are written to disk.
+      file-size-threshold: 2KB
+      # Max file size.
+      max-file-size: 20MB
+      # Max Request Size
+      max-request-size: 200MB
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWK_URI:http://localhost:8668/api/gemba/v0/.well-known/jwks.json}
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:123456a@}
+    timeout: ${REDIS_TIMEOUT:500ms}
+  cache:
+    redis:
+      time-to-live: 60m
+      value-format: json
+      cache-props:
+        oauth2token:
+          time-to-live: ${OAUTH2_TOKEN_TTL:45m}
+        client-authority:
+          time-to-live: ${CLIENT_TOKEN_TTL:5m}
+        user-authority:
+          time-to-live: ${USER_AUTH_TOKEN_TTL:5s}
+        forbidden-token:
+          time-to-live: ${FORBIDDEN_TOKEN_TTL:60m}
+        forbidden-refresh-token:
+          time-to-live: ${FORBIDDEN_REFRESH_TOKEN_TTL:60m}
+        login-fail-count:
+          time-to-live: ${LOGIN_FAIL_TTL:1m}
+        blocked-user-login:
+          time-to-live: ${LOGIN_FAIL_TTL:1m}
+        org-unit-access-floor:
+          time-to-live: ${ORG_UNIT_ACCESS_FLOOR_TTL:10m}
+        user-access-code:
+          time-to-live: ${USER_ACCESS_CODE_TTL:10m}
+  main:
+    allow-bean-definition-overriding: true
+
+  #Config email smtp
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: gemba.hitachi@gmail.com
+    password: lnmuyxaravurmxgi
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  #Config quartz
+  quartz:
+    job-store-type: jdbc #Database Mode
+    jdbc:
+      initialize-schema: ${QUARTZ_SCHEDULE:always}
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceId: AUTO #Default hostname and timestamp generate instance ID, which can be any string, but must be the only corresponding qrtz_scheduler_state INSTANCE_NAME field for all dispatchers
+            #instanceName: clusteredScheduler #quartzScheduler
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX #Persistence Configuration
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate #We only make database-specific proxies for databases
+            useProperties: false #Indicates that JDBC JobStore stores all values in JobDataMaps as strings, so more complex objects can be stored as name-value pairs rather than serialized in BLOB columns.In the long run, this is safer because you avoid serializing non-String classes to BLOB class versions.
+            misfireThreshold: 60000 #The number of milliseconds the dispatcher will "tolerate" a Trigger to pass its next startup time before being considered a "fire".The default value (if you do not enter this property in the configuration) is 60000 (60 seconds).
+            clusterCheckinInterval: 5000 #Set the frequency (in milliseconds) of this instance'checkin'* with other instances of the cluster.Affects the speed of detecting failed instances.
+            isClustered: true #Turn on Clustering
+            tablePrefix: gemba_quartz.qrtz_
+          threadPool: #Connection Pool
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 10
+            threadPriority: 5
+            threadsInheritContextClassLoaderOfInitializingThread: true
+
+## File Storage Properties
+# All files uploaded through the REST API will be stored in this directory
+file:
+  upload-dir: /root/gemba/photos/
+
+jwt:
+  secret: lsdjfkah38dskjas2890djkvaklkdskva293sknfk
+
+common:
+  local:
+    group-level-max: ${COMMON_LOCAL_GROUP_LEVEL_MAX:6}
+  useSwagger: ${ENABLE_SWAGGER:true}
+  client:
+    oauth2:
+      default-pass: 123456aA@
+      uri: ${COMMON_CLIENT_OAUTH2_URI:http://localhost:8668/api/gemba/v0/oauth/token}
+      client:
+        id: ${COMMON_CLIENT_OAUTH2_CLIENT_ID:e1a2e8fa-6f74-457b-ae89-35bc6e4277ca}
+        secret: ${COMMON_CLIENT_OAUTH2_CLIENT_SECRET:4f49e750-87f6-4e98-8f8d-0968219f6d64}
+
+security:
+  basic:
+    enabled: false
+  oauth2:
+    authorization:
+      jwt:
+        key-store: ssia.jks
+        key-store-password: ssia123
+        key-alias: ssia
+        expires-in: 12h # 1 hour, duration in time format nHnMnS
+        refresh-token-expires-in: 30d # 30 days
+  path-matcher:
+    permit-all-path-patterns:
+      - /v0/api-docs/**
+      - /v2/api-docs
+      - /v2/api-docs/**
+      - /v3/api-docs/**
+      - /swagger-resources
+      - /swagger-resources/**
+      - /webjars/**
+      - /swagger-ui.html
+      - /swagger-ui/**
+      - /actuator/health
+      - /oauth2/login/**
+      - /oauth2/login
+      - /oauth2/refresh-token
+      - /.well-known/jwks.json
+      - .*/oauth2/login
+      - /users/update-password
+
+logging:
+  level:
+    root: INFO
+#    root: DEBUG
+
+
+management:
+  security:
+    enabled: false
+  health:
+    defaults:
+      enabled: false
+  endpoints:
+    enabled-by-default: false
+    health:
+      enabled: false
+    web:
+      exposure:
+        include: [ ]
+      cors:
+        allowed-origins: ${CORS_ORIGINS:*}
+        allowed-methods: ${CORS_METHODS:*}
+        allowed-headers: ${CORS_HEADERS:*}
+        allow-credentials: ${CORS_CREDENTIALS:false}
+  endpoint:
+    info:
+      enabled: false
+
+vwm:
+  user:
+    limit-member: ${LIMIT_MEMBER:100}
+    limit-leader: ${LIMIT_LEADER:2}
+  group:
+    admin: ${GROUP_ADMIN:ADMIN}
+    khoTong: ${GROUP_KT:1201T00000}
+
+

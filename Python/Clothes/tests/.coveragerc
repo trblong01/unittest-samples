@@ -1,0 +1,8 @@
+[run]
+omit =
+    */tests/*
+
+[report]
+exclude_lines =
+    # Ignore `if __name__ == "__main__"` statements
+    if __name__ == .__main__.:
